@@ -4,7 +4,10 @@ import contracts.com.hello.world.HelloWorld;
 import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
 import org.springframework.stereotype.Service;
+import org.web3j.abi.EventValues;
 import org.web3j.protocol.admin.Admin;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.quorum.Quorum;
@@ -16,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static org.web3j.tx.Contract.staticExtractEventParameters;
 
 @Service
 public class SayHiService {
@@ -60,15 +65,27 @@ public class SayHiService {
         list.add(node7Key);
         ClientTransactionManager clientTransactionManager = getPrivateTransactionManager(quorum, address, list, 40, 100);
         HelloWorld helloWorldContract = HelloWorld.load(contractAddress, admin, clientTransactionManager, BigInteger.valueOf(0), BigInteger.valueOf(100000000));
-        TransactionReceipt tx = helloWorldContract.update("hi from node 7").send();
+        TransactionReceipt tx = helloWorldContract.update(message).send();
         return tx;
     }
 
     public void getAllNodeEvents(String contractAddress) {
         ScheduledExecutorService scheduledExecutorService = Async.defaultExecutorService();
-        Quorum quorum = Quorum.build(getHttpService("http://localhost:22000"));
-        quorum.blockFlowable(false).subscribe(block -> {
-            System.out.println(block.getBlock());
+        Admin admin = Admin.build(getHttpService("http://localhost:22000"), 100, scheduledExecutorService);
+        EthFilter filter = new EthFilter(DefaultBlockParameterName.EARLIEST,
+            DefaultBlockParameterName.LATEST, contractAddress);
+        admin.ethLogFlowable(filter).subscribe(log -> {
+            System.out.println(log.getData());
+            System.out.println(log.getTransactionHash());
+            System.out.println(log.getTopics());
+            System.out.println(log.getBlockNumber());
+
+            EventValues eventValues = staticExtractEventParameters(HelloWorld.UPDATEGREETING_EVENT, log);
+            HelloWorld.UpdateGreetingEventResponse typedResponse = new HelloWorld.UpdateGreetingEventResponse();
+            typedResponse.log = log;
+            typedResponse.greeting = (String) eventValues.getNonIndexedValues().get(0).getValue();
+            System.out.println(typedResponse.log);
+            System.out.println(typedResponse.greeting);
 
         });
     }
