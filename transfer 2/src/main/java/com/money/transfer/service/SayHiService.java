@@ -63,4 +63,13 @@ public class SayHiService {
         TransactionReceipt tx = helloWorldContract.update("hi from node 7").send();
         return tx;
     }
+
+    public void getAllNodeEvents(String contractAddress) {
+        ScheduledExecutorService scheduledExecutorService = Async.defaultExecutorService();
+        Quorum quorum = Quorum.build(getHttpService("http://localhost:22000"));
+        quorum.blockFlowable(false).subscribe(block -> {
+            System.out.println(block.getBlock());
+
+        });
+    }
 }

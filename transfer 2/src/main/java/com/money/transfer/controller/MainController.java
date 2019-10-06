@@ -6,7 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+
+import java.util.List;
 
 @RestController
 public class MainController {
@@ -23,5 +26,12 @@ public class MainController {
     public TransactionReceipt sayHiBack(@PathVariable("message") String message, @PathVariable("contractAddress") String contractAddress) throws Exception {
         return sayHiService.sayHiBack(message, contractAddress);
     }
+
+    @GetMapping("/updateEvents/{contractAddress}")
+    public List<Log> getAllNode1Events(@PathVariable("contractAddress") String contractAddress) {
+        sayHiService.getAllNodeEvents(contractAddress);
+        return null;
+    }
+
 
 }
