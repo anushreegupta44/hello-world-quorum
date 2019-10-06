@@ -5,6 +5,7 @@ import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
 import org.springframework.stereotype.Service;
 import org.web3j.protocol.admin.Admin;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.quorum.Quorum;
 import org.web3j.quorum.tx.ClientTransactionManager;
@@ -47,4 +48,19 @@ public class SayHiService {
         return new HttpService(url, okHttpClient, false);
     }
 
+    public TransactionReceipt sayHiBack(String message, String contractAddress) throws Exception {
+        ScheduledExecutorService scheduledExecutorService = Async.defaultExecutorService();
+        Admin admin = Admin.build(getHttpService("http://localhost:22006"), 100, scheduledExecutorService);
+        Quorum quorum = Quorum.build(getHttpService("http://localhost:22006"));
+        String address = admin.ethAccounts().send().getAccounts().get(0);
+        String node1Key = "BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=";
+        String node7Key = "ROAZBWtSacxXQrOe3FGAqJDyJjFePR5ce4TSIzmJ0Bc=";
+        List list = new ArrayList();
+        list.add(node1Key);
+        list.add(node7Key);
+        ClientTransactionManager clientTransactionManager = getPrivateTransactionManager(quorum, address, list, 40, 100);
+        HelloWorld helloWorldContract = HelloWorld.load(contractAddress, admin, clientTransactionManager, BigInteger.valueOf(0), BigInteger.valueOf(100000000));
+        TransactionReceipt tx = helloWorldContract.update("hi from node 7").send();
+        return tx;
+    }
 }

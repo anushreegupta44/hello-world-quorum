@@ -4,7 +4,9 @@ import com.money.transfer.service.SayHiService;
 import contracts.com.hello.world.HelloWorld;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 @RestController
 public class MainController {
@@ -15,6 +17,11 @@ public class MainController {
     @GetMapping("/sayHi")
     public HelloWorld sayHiToTheBlockchain() throws Exception {
         return sayHiService.deployGreetingContract();
+    }
+
+    @GetMapping("/sayHiBack/{message}/{contractAddress}")
+    public TransactionReceipt sayHiBack(@PathVariable("message") String message, @PathVariable("contractAddress") String contractAddress) throws Exception {
+        return sayHiService.sayHiBack(message, contractAddress);
     }
 
 }

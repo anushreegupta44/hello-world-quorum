@@ -6,4 +6,8 @@ contract HelloWorld {
     constructor(string _greeting) public{
         greeting = _greeting;
     }
+
+    function update (string _newGreeting) public {
+        greeting = _newGreeting;
+    }
 }
