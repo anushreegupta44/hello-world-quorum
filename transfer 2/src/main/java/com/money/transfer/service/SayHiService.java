@@ -15,8 +15,7 @@ import org.web3j.quorum.tx.ClientTransactionManager;
 import org.web3j.utils.Async;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -24,6 +23,13 @@ import static org.web3j.tx.Contract.staticExtractEventParameters;
 
 @Service
 public class SayHiService {
+
+    private Map<String, String> handlerMap = new HashMap<>();
+
+    public SayHiService() {
+        handlerMap.put("0x616ea41f1d25108990ce3315d377a615ededd0a83e4cdd7fa4daafa31a71724b", "updateEvent");
+        handlerMap.put("0xb81041a32a7a5e778a41739306638fbba81e6b766d123a5664a3a6bf18959912", "addEvent");
+    }
 
     public HelloWorld deployGreetingContract() throws Exception {
         ScheduledExecutorService scheduledExecutorService = Async.defaultExecutorService();
@@ -69,23 +75,32 @@ public class SayHiService {
         return tx;
     }
 
-    public void getAllNodeEvents(String contractAddress) {
+    public void getAllNodeEvents() {
         ScheduledExecutorService scheduledExecutorService = Async.defaultExecutorService();
         Admin admin = Admin.build(getHttpService("http://localhost:22000"), 100, scheduledExecutorService);
         EthFilter filter = new EthFilter(DefaultBlockParameterName.EARLIEST,
-            DefaultBlockParameterName.LATEST, contractAddress);
+            DefaultBlockParameterName.LATEST, Collections.emptyList());
         admin.ethLogFlowable(filter).subscribe(log -> {
+            System.out.println("This is a log of type " + handlerMap.get(log.getTopics().get(0)));
+            if (handlerMap.get(log.getTopics().get(0)).equalsIgnoreCase("addEvent")) {
+                EventValues eventValues = staticExtractEventParameters(HelloWorld.ADDGREETING_EVENT, log);
+                HelloWorld.AddGreetingEventResponse typedResponse = new HelloWorld.AddGreetingEventResponse();
+                typedResponse.log = log;
+                typedResponse.greeting = (String) eventValues.getNonIndexedValues().get(0).getValue();
+                System.out.println(typedResponse.log);
+                System.out.println(typedResponse.greeting);
+            } else {
+                EventValues eventValues = staticExtractEventParameters(HelloWorld.UPDATEGREETING_EVENT, log);
+                HelloWorld.UpdateGreetingEventResponse typedResponse = new HelloWorld.UpdateGreetingEventResponse();
+                typedResponse.log = log;
+                typedResponse.greeting = (String) eventValues.getNonIndexedValues().get(0).getValue();
+                System.out.println(typedResponse.log);
+                System.out.println(typedResponse.greeting);
+            }
             System.out.println(log.getData());
             System.out.println(log.getTransactionHash());
             System.out.println(log.getTopics());
             System.out.println(log.getBlockNumber());
-
-            EventValues eventValues = staticExtractEventParameters(HelloWorld.UPDATEGREETING_EVENT, log);
-            HelloWorld.UpdateGreetingEventResponse typedResponse = new HelloWorld.UpdateGreetingEventResponse();
-            typedResponse.log = log;
-            typedResponse.greeting = (String) eventValues.getNonIndexedValues().get(0).getValue();
-            System.out.println(typedResponse.log);
-            System.out.println(typedResponse.greeting);
 
         });
     }

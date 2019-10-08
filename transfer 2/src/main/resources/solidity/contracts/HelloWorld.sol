@@ -7,8 +7,13 @@ contract HelloWorld {
      string greeting
     );
 
+    event AddGreeting(
+     string greeting
+    );
+
     constructor(string _greeting) public{
         greeting = _greeting;
+        emit AddGreeting(greeting);
     }
 
     function update (string _newGreeting) public {

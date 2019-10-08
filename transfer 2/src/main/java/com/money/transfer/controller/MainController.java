@@ -27,9 +27,9 @@ public class MainController {
         return sayHiService.sayHiBack(message, contractAddress);
     }
 
-    @GetMapping("/updateEvents/{contractAddress}")
-    public List<Log> getAllNode1Events(@PathVariable("contractAddress") String contractAddress) {
-        sayHiService.getAllNodeEvents(contractAddress);
+    @GetMapping("/updateEvents")
+    public List<Log> getAllNode1Events() {
+        sayHiService.getAllNodeEvents();
         return null;
     }
 
