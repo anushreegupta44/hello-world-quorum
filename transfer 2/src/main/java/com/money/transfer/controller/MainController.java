@@ -1,6 +1,7 @@
 package com.money.transfer.controller;
 
 import com.money.transfer.service.SayHiService;
+import contracts.com.hello.world.ContractRegistry;
 import contracts.com.hello.world.HelloWorld;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,20 +18,25 @@ public class MainController {
     @Autowired
     SayHiService sayHiService;
 
-    @GetMapping("/sayHi")
-    public HelloWorld sayHiToTheBlockchain() throws Exception {
-        return sayHiService.deployGreetingContract();
+    @GetMapping("/sayHi/{contractRegistryAddress}")
+    public HelloWorld sayHiToTheBlockchain(@PathVariable("contractRegistryAddress") String contractRegistryAddress) throws Exception {
+        return sayHiService.deployGreetingContract(contractRegistryAddress);
     }
 
-    @GetMapping("/sayHiBack/{message}/{contractAddress}")
-    public TransactionReceipt sayHiBack(@PathVariable("message") String message, @PathVariable("contractAddress") String contractAddress) throws Exception {
-        return sayHiService.sayHiBack(message, contractAddress);
+    @GetMapping("/sayHiBack/{message}/{contractRegistryAddress}")
+    public TransactionReceipt sayHiBack(@PathVariable("message") String message, @PathVariable("contractRegistryAddress") String contractRegistryAddress) throws Exception {
+        return sayHiService.sayHiBack(message, contractRegistryAddress);
     }
 
     @GetMapping("/updateEvents")
     public List<Log> getAllNode1Events() {
         sayHiService.getAllNodeEvents();
         return null;
+    }
+
+    @GetMapping("/contractRegistry")
+    public ContractRegistry deployContractRegistry() throws Exception {
+        return sayHiService.deployContractRegistry();
     }
 
 

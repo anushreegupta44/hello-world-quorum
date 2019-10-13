@@ -1,5 +1,6 @@
 package com.money.transfer.service;
 
+import contracts.com.hello.world.ContractRegistry;
 import contracts.com.hello.world.HelloWorld;
 import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
@@ -31,7 +32,7 @@ public class SayHiService {
         handlerMap.put("0xb81041a32a7a5e778a41739306638fbba81e6b766d123a5664a3a6bf18959912", "addEvent");
     }
 
-    public HelloWorld deployGreetingContract() throws Exception {
+    public HelloWorld deployGreetingContract(String contractRegistryAddress) throws Exception {
         ScheduledExecutorService scheduledExecutorService = Async.defaultExecutorService();
         Admin admin = Admin.build(getHttpService("http://localhost:22000"), 100, scheduledExecutorService);
         Quorum quorum = Quorum.build(getHttpService("http://localhost:22000"));
@@ -42,7 +43,7 @@ public class SayHiService {
         list.add(node1Key);
         list.add(node7Key);
         ClientTransactionManager clientTransactionManager = getPrivateTransactionManager(quorum, address, list, 40, 100);
-        return HelloWorld.deploy(admin, clientTransactionManager, BigInteger.valueOf(0), BigInteger.valueOf(100000000), "hello").send();
+        return HelloWorld.deploy(admin, clientTransactionManager, BigInteger.valueOf(0), BigInteger.valueOf(100000000), contractRegistryAddress, "hello", "node1", "node7").send();
     }
 
     public ClientTransactionManager getPrivateTransactionManager(Quorum quorum, String address, List<String> nodes, int txMgrConnectionAttempts, int txMgrSleepDuration) {
@@ -52,14 +53,14 @@ public class SayHiService {
 
     public HttpService getHttpService(String url) {
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
-            .connectTimeout(10000, TimeUnit.MILLISECONDS)
-            .readTimeout(10000, TimeUnit.MILLISECONDS)
+            .connectTimeout(100000, TimeUnit.MILLISECONDS)
+            .readTimeout(100000, TimeUnit.MILLISECONDS)
             .connectionSpecs(List.of(ConnectionSpec.CLEARTEXT))
             .build();
         return new HttpService(url, okHttpClient, false);
     }
 
-    public TransactionReceipt sayHiBack(String message, String contractAddress) throws Exception {
+    public TransactionReceipt sayHiBack(String message, String contractRegistryAddress) throws Exception {
         ScheduledExecutorService scheduledExecutorService = Async.defaultExecutorService();
         Admin admin = Admin.build(getHttpService("http://localhost:22006"), 100, scheduledExecutorService);
         Quorum quorum = Quorum.build(getHttpService("http://localhost:22006"));
@@ -70,6 +71,10 @@ public class SayHiService {
         list.add(node1Key);
         list.add(node7Key);
         ClientTransactionManager clientTransactionManager = getPrivateTransactionManager(quorum, address, list, 40, 100);
+        ContractRegistry contractRegistry = ContractRegistry
+            .load(contractRegistryAddress, admin, clientTransactionManager, BigInteger.valueOf(0), BigInteger.valueOf(100000000));
+        String contractAddress = contractRegistry.getContract("node1", "node7").send();
+        System.out.println("Hello world contrcat address " + contractAddress);
         HelloWorld helloWorldContract = HelloWorld.load(contractAddress, admin, clientTransactionManager, BigInteger.valueOf(0), BigInteger.valueOf(100000000));
         TransactionReceipt tx = helloWorldContract.update(message).send();
         return tx;
@@ -103,5 +108,29 @@ public class SayHiService {
             System.out.println(log.getBlockNumber());
 
         });
+    }
+
+    public ContractRegistry deployContractRegistry() throws Exception {
+        ScheduledExecutorService scheduledExecutorService = Async.defaultExecutorService();
+        Admin admin = Admin.build(getHttpService("http://localhost:22000"), 100, scheduledExecutorService);
+        Quorum quorum = Quorum.build(getHttpService("http://localhost:22000"));
+        String address = admin.ethAccounts().send().getAccounts().get(0);
+        List privateForAll = new ArrayList();
+        String node1Key = "BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=";
+        String node7Key = "ROAZBWtSacxXQrOe3FGAqJDyJjFePR5ce4TSIzmJ0Bc=";
+        String node2Key = "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=";
+        String node3Key = "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=";
+        String node4Key = "oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8=";
+        String node5Key = "R56gy4dn24YOjwyesTczYa8m5xhP6hF2uTMCju/1xkY=";
+        String node6Key = "UfNSeSGySeKg11DVNEnqrUtxYRVor4+CvluI8tVv62Y=";
+        privateForAll.add(node1Key);
+        privateForAll.add(node2Key);
+        privateForAll.add(node3Key);
+        privateForAll.add(node4Key);
+        privateForAll.add(node5Key);
+        privateForAll.add(node6Key);
+        privateForAll.add(node7Key);
+        ClientTransactionManager clientTransactionManager = getPrivateTransactionManager(quorum, address, privateForAll, 100, 200);
+        return ContractRegistry.deploy(admin, clientTransactionManager, BigInteger.valueOf(0), BigInteger.valueOf(100000000)).send();
     }
 }
