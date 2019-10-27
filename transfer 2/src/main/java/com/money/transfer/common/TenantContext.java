@@ -42,4 +42,8 @@ public class TenantContext {
     public String getConstellationKeyForNode(String toNode) {
         return nodeRequestConfigs.get(toNode).getConstellationPub();
     }
+
+    public Map<String, RequestConfig> getNodeRequestConfigs() {
+        return nodeRequestConfigs;
+    }
 }
